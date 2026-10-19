@@ -2,7 +2,7 @@ name: release
 
 on:
   schedule:
-    - cron: '0 13 * * *'  # This schedule runs every 13:00:00Z(21:00:00+08:00)
+    - cron: '17 13 * * *'  # Daily at 13:17Z (21:17+08:00); offset minute avoids the :00 scheduler spike
   # https://github.com/orgs/community/discussions/26286?utm_source=chatgpt.com#discussioncomment-3251208
   # "The create event does not support branch filter and tag filter."
   # The "create tags" trigger is specifically focused on the creation of new tags, while the "push tags" trigger is activated when tags are pushed, including both new tag creations and updates to existing tags.
@@ -18,13 +18,21 @@ permissions:
   statuses: read
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
+# cancel-in-progress is false on purpose: a release run force-moves the nightly
+# tag, uploads CLI assets and pushes Docker images/PyPI packages. Cancelling it
+# midway would leave a half-published release (moved tag without matching
+# assets/images). A newer run queues behind the active one instead.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   prepare:
+    # Fork guard: the nightly schedule only runs in the AiFeatures fork. Every
+    # other job needs prepare, so they skip with it; tag pushes are unaffected.
+    if: ${{ github.event_name != 'schedule' || github.repository_owner == 'AiFeatures' }}
     runs-on: [ "self-hosted", "ragflow-release" ]
+    timeout-minutes: 15
     outputs:
       release_tag: ${{ steps.release.outputs.release_tag }}
       prerelease: ${{ steps.release.outputs.prerelease }}
@@ -112,6 +120,7 @@ jobs:
             runner: windows-11-arm
             output_ext: .exe
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     env:
       CLI_NAME: ragflow-cli
       CLI_MAIN: ./cmd/ragflow-cli.go
@@ -204,6 +213,7 @@ jobs:
       - prepare
       - build_cli
     runs-on: [ "self-hosted", "ragflow-release" ]
+    timeout-minutes: 20
 
     steps:
       - name: Ensure workspace ownership
@@ -257,6 +267,7 @@ jobs:
       - prepare
       - publish_cli_assets
     runs-on: [ "self-hosted", "ragflow-release" ]
+    timeout-minutes: 90
     env:
       RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
 
