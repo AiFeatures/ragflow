@@ -45,7 +45,7 @@ jobs:
     # https://github.com/orgs/community/discussions/26261
     # Fork guard: the nightly schedule only runs in the AiFeatures fork. Every
     # other job needs this one (directly or transitively), so they skip with it.
-    if: ${{ (github.event_name != 'pull_request' && github.event_name != 'pull_request_target' || (github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'ci') && (github.event.action != 'labeled' || github.event.label.name == 'ci'))) && (github.event_name != 'schedule' || github.repository_owner == 'AiFeatures') }}
+    if: ${{ (github.event_name != 'pull_request' && github.event_name != 'pull_request_target' || (github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'ci') && (github.event.action != 'labeled' || github.event.label.name == 'ci'))) && (github.event_name != 'schedule' || github.repository_owner == 'infiniflow') }}
     permissions:
       actions: write
       contents: read

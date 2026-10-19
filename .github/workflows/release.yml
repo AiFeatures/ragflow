@@ -30,7 +30,7 @@ jobs:
   prepare:
     # Fork guard: the nightly schedule only runs in the AiFeatures fork. Every
     # other job needs prepare, so they skip with it; tag pushes are unaffected.
-    if: ${{ github.event_name != 'schedule' || github.repository_owner == 'AiFeatures' }}
+    if: ${{ github.event_name != 'schedule' || github.repository_owner == 'infiniflow' }}
     runs-on: [ "self-hosted", "ragflow-release" ]
     timeout-minutes: 15
     outputs:
